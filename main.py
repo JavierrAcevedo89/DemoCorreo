@@ -1,10 +1,11 @@
 import tkinter as tk
-from tkinter import messagebox, simpledialog
+from tkinter import messagebox
 
 class EmailApp:
-    def __init__(self, master):
+    def __init__(self, master, username):
         self.master = master
-        self.master.title("Bandeja de Correo Electrónico")
+        self.username = username
+        self.master.title(f"Bandeja de Correo Electrónico - {self.username}")
 
         self.messages = []
 
@@ -12,6 +13,8 @@ class EmailApp:
         self.from_label.grid(row=0, column=0, sticky="w")
         self.from_entry = tk.Entry(master)
         self.from_entry.grid(row=0, column=1, columnspan=2, sticky="we")
+        self.from_entry.insert(0, self.username)
+        self.from_entry.config(state="readonly")
 
         self.to_label = tk.Label(master, text="Para:")
         self.to_label.grid(row=1, column=0, sticky="w")
@@ -36,10 +39,10 @@ class EmailApp:
 
         self.message_listbox = tk.Listbox(master, height=15, width=70)
         self.message_listbox.grid(row=5, column=0, columnspan=3, sticky="we")
-        self.message_listbox.bind('<Double-Button-1>', self.show_message_details)
+        self.message_listbox.bind('<<Double-Button-1>>', self.show_message_details)
 
     def send_message(self):
-        sender = self.from_entry.get()
+        sender = self.username
         receiver = self.to_entry.get()
         subject = self.subject_entry.get()
         message = self.message_text.get("1.0", tk.END)
@@ -64,15 +67,19 @@ class EmailApp:
         messagebox.showinfo("Detalles del Mensaje", details)
 
     def clear_fields(self):
-        self.from_entry.delete(0, tk.END)
         self.to_entry.delete(0, tk.END)
         self.subject_entry.delete(0, tk.END)
         self.message_text.delete("1.0", tk.END)
 
 def main():
-    root = tk.Tk()
-    app = EmailApp(root)
-    root.mainloop()
+    root1 = tk.Tk()
+    app1 = EmailApp(root1, "Usuario1")
+
+    root2 = tk.Tk()
+    app2 = EmailApp(root2, "Usuario2")
+
+    root1.mainloop()
+    root2.mainloop()
 
 if __name__ == "__main__":
     main()
