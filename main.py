@@ -8,7 +8,8 @@ class EmailApp:
         self.other_app = other_app
         self.master.title(f"Bandeja de Correo Electrónico - {self.username}")
 
-        self.messages = []
+        self.received_messages = []
+        self.sent_messages = []
 
         self.from_label = tk.Label(master, text="De:")
         self.from_label.grid(row=0, column=0, sticky="w")
@@ -38,9 +39,17 @@ class EmailApp:
         self.refresh_button = tk.Button(master, text="Actualizar", command=self.refresh_messages)
         self.refresh_button.grid(row=4, column=2)
 
-        self.message_listbox = tk.Listbox(master, height=15, width=70)
-        self.message_listbox.grid(row=5, column=0, columnspan=3, sticky="we")
-        self.message_listbox.bind('<<Double-Button-1>>', self.show_message_details)
+        self.received_listbox_label = tk.Label(master, text="Correos Recibidos:")
+        self.received_listbox_label.grid(row=6, column=0, sticky="w")
+        self.received_message_listbox = tk.Listbox(master, height=10, width=70)
+        self.received_message_listbox.grid(row=7, column=0, columnspan=3, sticky="we")
+        self.received_message_listbox.bind('<Double-Button-1>', self.show_message_details)
+
+        self.sent_listbox_label = tk.Label(master, text="Correos Enviados:")
+        self.sent_listbox_label.grid(row=8, column=0, sticky="w")
+        self.sent_message_listbox = tk.Listbox(master, height=10, width=70)
+        self.sent_message_listbox.grid(row=9, column=0, columnspan=3, sticky="we")
+        self.sent_message_listbox.bind('<Double-Button-1>', self.show_message_details)
 
     def send_message(self):
         sender = self.username
@@ -50,6 +59,7 @@ class EmailApp:
 
         if sender and receiver and subject and message:
             self.other_app.receive_message({"De": sender, "Para": receiver, "Asunto": subject, "Mensaje": message})
+            self.sent_messages.append({"De": sender, "Para": receiver, "Asunto": subject, "Mensaje": message})
             messagebox.showinfo("Mensaje enviado", "El mensaje ha sido enviado correctamente.")
             self.clear_fields()
             self.refresh_messages()
@@ -57,17 +67,30 @@ class EmailApp:
             messagebox.showerror("Error", "Por favor complete todos los campos.")
 
     def receive_message(self, message):
-        self.messages.append(message)
+        self.received_messages.append(message)
         self.refresh_messages()
 
     def refresh_messages(self):
-        self.message_listbox.delete(0, tk.END)
-        for msg in self.messages:
-            self.message_listbox.insert(tk.END, f"De: {msg['De']} - Para: {msg['Para']} - Asunto: {msg['Asunto']}")
+        self.received_message_listbox.delete(0, tk.END)
+        self.sent_message_listbox.delete(0, tk.END)
+
+        for msg in self.received_messages:
+            self.received_message_listbox.insert(tk.END, f"De: {msg['De']} - Para: {msg['Para']} - Asunto: {msg['Asunto']}")
+
+        for msg in self.sent_messages:
+            self.sent_message_listbox.insert(tk.END, f"De: {msg['De']} - Para: {msg['Para']} - Asunto: {msg['Asunto']}")
 
     def show_message_details(self, event):
-        index = self.message_listbox.curselection()[0]
-        msg = self.messages[index]
+        index_received = self.received_message_listbox.curselection()
+        index_sent = self.sent_message_listbox.curselection()
+
+        if index_received:
+            index = index_received[0]
+            msg = self.received_messages[index]
+        elif index_sent:
+            index = index_sent[0]
+            msg = self.sent_messages[index]
+
         details = f"De: {msg['De']}\nPara: {msg['Para']}\nAsunto: {msg['Asunto']}\nMensaje:\n{msg['Mensaje']}"
         messagebox.showinfo("Detalles del Mensaje", details)
 
