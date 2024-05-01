@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, simpledialog
 
 class EmailApp:
     def __init__(self, master):
@@ -36,6 +36,7 @@ class EmailApp:
 
         self.message_listbox = tk.Listbox(master, height=15, width=70)
         self.message_listbox.grid(row=5, column=0, columnspan=3, sticky="we")
+        self.message_listbox.bind('<Double-Button-1>', self.show_message_details)
 
     def send_message(self):
         sender = self.from_entry.get()
@@ -47,6 +48,7 @@ class EmailApp:
             self.messages.append({"De": sender, "Para": receiver, "Asunto": subject, "Mensaje": message})
             messagebox.showinfo("Mensaje enviado", "El mensaje ha sido enviado correctamente.")
             self.clear_fields()
+            self.refresh_messages()
         else:
             messagebox.showerror("Error", "Por favor complete todos los campos.")
 
@@ -54,6 +56,12 @@ class EmailApp:
         self.message_listbox.delete(0, tk.END)
         for msg in self.messages:
             self.message_listbox.insert(tk.END, f"De: {msg['De']} - Para: {msg['Para']} - Asunto: {msg['Asunto']}")
+
+    def show_message_details(self, event):
+        index = self.message_listbox.curselection()[0]
+        msg = self.messages[index]
+        details = f"De: {msg['De']}\nPara: {msg['Para']}\nAsunto: {msg['Asunto']}\nMensaje:\n{msg['Mensaje']}"
+        messagebox.showinfo("Detalles del Mensaje", details)
 
     def clear_fields(self):
         self.from_entry.delete(0, tk.END)
