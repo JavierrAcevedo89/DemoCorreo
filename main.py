@@ -1,115 +1,64 @@
-import tkinter as tk
-from tkinter import messagebox
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from tkinter import Tk, Label, Entry, Text, Button, END, messagebox
 
-class EmailApp:
-    def __init__(self, master, username, other_app):
-        self.master = master
-        self.username = username
-        self.other_app = other_app
-        self.master.title(f"Bandeja de Correo Electrónico - {self.username}")
+def send_email():
+    sender_email = sender_entry.get()
+    sender_password = password_entry.get()  # Aquí ingresarás la contraseña de aplicación
+    recipient_email = recipient_entry.get()
+    subject = subject_entry.get()
+    message = message_text.get("1.0", END)
 
-        self.received_messages = []
-        self.sent_messages = []
+    if not sender_email or not sender_password or not recipient_email or not subject or not message.strip():
+        messagebox.showerror("Error", "Todos los campos son obligatorios")
+        return
 
-        self.from_label = tk.Label(master, text="De:")
-        self.from_label.grid(row=0, column=0, sticky="w")
-        self.from_entry = tk.Entry(master)
-        self.from_entry.grid(row=0, column=1, columnspan=2, sticky="we")
-        self.from_entry.insert(0, self.username)
-        self.from_entry.config(state="readonly")
+    try:
+        # Configurar el servidor SMTP
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
 
-        self.to_label = tk.Label(master, text="Para:")
-        self.to_label.grid(row=1, column=0, sticky="w")
-        self.to_entry = tk.Entry(master)
-        self.to_entry.grid(row=1, column=1, columnspan=2, sticky="we")
+        # Construir el correo electrónico
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = recipient_email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(message, 'plain'))
 
-        self.subject_label = tk.Label(master, text="Asunto:")
-        self.subject_label.grid(row=2, column=0, sticky="w")
-        self.subject_entry = tk.Entry(master)
-        self.subject_entry.grid(row=2, column=1, columnspan=2, sticky="we")
+        # Enviar el correo electrónico
+        server.send_message(msg)
+        server.quit()
 
-        self.message_label = tk.Label(master, text="Mensaje:")
-        self.message_label.grid(row=3, column=0, sticky="nw")
-        self.message_text = tk.Text(master, height=10, width=50)
-        self.message_text.grid(row=3, column=1, columnspan=2, sticky="we")
+        messagebox.showinfo("Éxito", "Correo enviado exitosamente")
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo enviar el correo: {e}")
 
-        self.send_button = tk.Button(master, text="Enviar", command=self.send_message)
-        self.send_button.grid(row=4, column=1)
+# Crear la interfaz gráfica
+root = Tk()
+root.title("Enviar correo por Gmail")
 
-        self.refresh_button = tk.Button(master, text="Actualizar", command=self.refresh_messages)
-        self.refresh_button.grid(row=4, column=2)
+Label(root, text="Correo remitente:").grid(row=0, column=0, padx=10, pady=5, sticky="e")
+sender_entry = Entry(root, width=50)
+sender_entry.grid(row=0, column=1, padx=10, pady=5)
 
-        self.received_listbox_label = tk.Label(master, text="Correos Recibidos:")
-        self.received_listbox_label.grid(row=6, column=0, sticky="w")
-        self.received_message_listbox = tk.Listbox(master, height=10, width=70)
-        self.received_message_listbox.grid(row=7, column=0, columnspan=3, sticky="we")
-        self.received_message_listbox.bind('<Double-Button-1>', self.show_message_details)
+Label(root, text="Contraseña remitente:").grid(row=1, column=0, padx=10, pady=5, sticky="e")
+password_entry = Entry(root, width=50, show="*")
+password_entry.grid(row=1, column=1, padx=10, pady=5)
 
-        self.sent_listbox_label = tk.Label(master, text="Correos Enviados:")
-        self.sent_listbox_label.grid(row=8, column=0, sticky="w")
-        self.sent_message_listbox = tk.Listbox(master, height=10, width=70)
-        self.sent_message_listbox.grid(row=9, column=0, columnspan=3, sticky="we")
-        self.sent_message_listbox.bind('<Double-Button-1>', self.show_message_details)
+Label(root, text="Correo destinatario:").grid(row=2, column=0, padx=10, pady=5, sticky="e")
+recipient_entry = Entry(root, width=50)
+recipient_entry.grid(row=2, column=1, padx=10, pady=5)
 
-    def send_message(self):
-        sender = self.username
-        receiver = self.to_entry.get()
-        subject = self.subject_entry.get()
-        message = self.message_text.get("1.0", tk.END)
+Label(root, text="Asunto:").grid(row=3, column=0, padx=10, pady=5, sticky="e")
+subject_entry = Entry(root, width=50)
+subject_entry.grid(row=3, column=1, padx=10, pady=5)
 
-        if sender and receiver and subject and message:
-            self.other_app.receive_message({"De": sender, "Para": receiver, "Asunto": subject, "Mensaje": message})
-            self.sent_messages.append({"De": sender, "Para": receiver, "Asunto": subject, "Mensaje": message})
-            messagebox.showinfo("Mensaje enviado", "El mensaje ha sido enviado correctamente.")
-            self.clear_fields()
-            self.refresh_messages()
-        else:
-            messagebox.showerror("Error", "Por favor complete todos los campos.")
+Label(root, text="Mensaje:").grid(row=4, column=0, padx=10, pady=5, sticky="ne")
+message_text = Text(root, width=50, height=10)
+message_text.grid(row=4, column=1, padx=10, pady=5)
 
-    def receive_message(self, message):
-        self.received_messages.append(message)
-        self.refresh_messages()
+Button(root, text="Enviar correo", command=send_email).grid(row=5, column=0, columnspan=2, pady=10)
 
-    def refresh_messages(self):
-        self.received_message_listbox.delete(0, tk.END)
-        self.sent_message_listbox.delete(0, tk.END)
-
-        for msg in self.received_messages:
-            self.received_message_listbox.insert(tk.END, f"De: {msg['De']} - Para: {msg['Para']} - Asunto: {msg['Asunto']}")
-
-        for msg in self.sent_messages:
-            self.sent_message_listbox.insert(tk.END, f"De: {msg['De']} - Para: {msg['Para']} - Asunto: {msg['Asunto']}")
-
-    def show_message_details(self, event):
-        index_received = self.received_message_listbox.curselection()
-        index_sent = self.sent_message_listbox.curselection()
-
-        if index_received:
-            index = index_received[0]
-            msg = self.received_messages[index]
-        elif index_sent:
-            index = index_sent[0]
-            msg = self.sent_messages[index]
-
-        details = f"De: {msg['De']}\nPara: {msg['Para']}\nAsunto: {msg['Asunto']}\nMensaje:\n{msg['Mensaje']}"
-        messagebox.showinfo("Detalles del Mensaje", details)
-
-    def clear_fields(self):
-        self.to_entry.delete(0, tk.END)
-        self.subject_entry.delete(0, tk.END)
-        self.message_text.delete("1.0", tk.END)
-
-def main():
-    root1 = tk.Tk()
-    app1 = EmailApp(root1, "Usuario1", None)
-
-    root2 = tk.Tk()
-    app2 = EmailApp(root2, "Usuario2", app1)
-
-    app1.other_app = app2
-
-    root1.mainloop()
-    root2.mainloop()
-
-if __name__ == "__main__":
-    main()
+root.mainloop()
